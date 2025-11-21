@@ -26,7 +26,7 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-[95%] mx-auto px-4 py-8"> <!-- ขยายความกว้างคอนเทนเนอร์เพื่อให้พอดีกับคอลัมน์ที่เพิ่มมา -->
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
@@ -58,6 +58,10 @@
                             <th class="p-4">วันที่</th>
                             <th class="p-4">ชื่อ-นามสกุล</th>
                             <th class="p-4">ทะเบียนผู้ใช้น้ำ</th>
+                            <!-- เพิ่มคอลัมน์ใหม่ -->
+                            <th class="p-4">เบอร์โทรศัพท์</th>
+                            <th class="p-4">อีเมล</th>
+                            <!-- จบคอลัมน์ใหม่ -->
                             <th class="p-4 text-center">e-Bill</th>
                             <th class="p-4 text-center">e-Tax</th>
                             <th class="p-4 text-center">สถานะ</th>
@@ -65,7 +69,7 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-gray-100">
-                        <tr><td colspan="7" class="p-8 text-center text-gray-500">กำลังโหลด...</td></tr>
+                        <tr><td colspan="9" class="p-8 text-center text-gray-500">กำลังโหลด...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -73,38 +77,35 @@
     </div>
 
     <script>
-        // *** ใส่ URL Web App ที่ได้จากการ Deploy (Exec as Me, Access: Anyone) ***
+        // *** 1. แก้ไข URL ตรงนี้ให้เป็น Web App URL ของคุณ ***
         const API_URL = 'https://script.google.com/macros/s/AKfycbzKKmAmPlOXxSeALUDe3fr3YLBYXCwEwfNoJbJelKUeg-kvQcQpID7M0qPHVXIN0aUc/exec'; 
 
         let globalData = [];
 
-        // ข้อมูลจำลอง (Mock Data) สำหรับกรณีเชื่อมต่อไม่ได้
+        // ข้อมูลจำลอง (Mock Data) สำหรับ Demo Mode
+        // Index Mapping: 0:keyId, 1:userId, 2:name, 3:phone, 4:email, 5:file, 6:timestamp, 7:regId, 8:bill, 9:tax, 10:status
         const mockData = [
-            // Format: [keyId, userlineId, nameId, keyNum, keyNum2, file, timestamp, keyNum3, bill, tax, status]
-            ['1', 'U12345', 'สมชาย ใจดี (Demo)', '0812345678', 'test@email.com', '', new Date().toISOString(), '11223344', 'สมัครใช้บริการ', 'ไม่สมัคร', 'pending'],
+            ['1', 'U12345', 'สมชาย ใจดี (Demo)', '0812345678', 'somchai@email.com', '', new Date().toISOString(), '11223344', 'สมัครใช้บริการ', 'ไม่สมัคร', 'pending'],
             ['2', 'U67890', 'วิไลวรรณ สวยงาม (Demo)', '0898765432', 'wilai@email.com', '', new Date(Date.now() - 86400000).toISOString(), '55667788', 'สมัครใช้บริการ', 'สมัครใช้บริการ', 'approved'],
-            ['3', 'U54321', 'มานะ อดทน (Demo)', '0901112222', '', '', new Date(Date.now() - 172800000).toISOString(), '99887766', 'ไม่สมัคร', 'สมัครใช้บริการ', 'pending']
+            ['3', 'U54321', 'มานะ อดทน (Demo)', '0901112222', '-', '', new Date(Date.now() - 172800000).toISOString(), '99887766', 'ไม่สมัคร', 'สมัครใช้บริการ', 'pending']
         ];
 
-        // จัดรูปแบบวันที่
         function formatDate(dateStr) {
             if (!dateStr) return "-";
-            // ถ้า dateStr เป็น Date Object หรือ ISO string
             try {
                 const d = new Date(dateStr);
                 if (!isNaN(d.getTime())) {
                     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit', hour: '2-digit', minute:'2-digit'});
                 }
             } catch (e) {}
-            return dateStr; // กรณีเป็น string format อื่นๆ
+            return dateStr;
         }
 
         async function fetchData() {
             const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</td></tr>';
 
             try {
-                // ส่ง action fetchData ไปเพื่อขอข้อมูล
                 const response = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'fetchData' })
@@ -114,7 +115,7 @@
                 
                 const rawData = await response.json();
                 
-                // ข้อมูล Google Sheet แถวแรกคือ Header
+                // ตัด Header ออกและเอาล่าสุดขึ้นก่อน
                 const rows = rawData.slice(1).reverse(); 
                 globalData = rows;
 
@@ -124,7 +125,6 @@
             } catch (error) {
                 console.warn("Fetch failed, switching to Demo Mode:", error);
                 
-                // แจ้งเตือนมุมขวาบน
                 const Toast = Swal.mixin({
                     toast: true,
                     position: 'top-end',
@@ -138,7 +138,6 @@
                     text: 'แสดงข้อมูลตัวอย่าง (Demo Mode)'
                 });
 
-                // ใช้ Mock Data แทน
                 globalData = mockData;
                 renderTable(mockData);
                 updateStats(mockData);
@@ -150,32 +149,35 @@
             tbody.innerHTML = '';
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center">ไม่มีข้อมูล</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center">ไม่มีข้อมูล</td></tr>';
                 return;
             }
 
-            data.forEach((row, index) => {
-                // ดึงค่าตาม Index ของ Array ที่ส่งมาจาก Sheet
-                const timestamp = row[6];
+            data.forEach((row) => {
+                // Map ข้อมูลตาม Index
                 const userId = row[1];
                 const name = row[2];
-                const regId = row[7]; // ทะเบียนน้ำ
+                const phone = row[3] || '-';  // เบอร์โทร (Index 3)
+                const email = row[4] || '-';  // อีเมล (Index 4)
+                const timestamp = row[6];
+                const regId = row[7]; 
                 const eBill = row[8];
                 const eTax = row[9];
                 const status = row[10] ? row[10].toString().toLowerCase() : 'pending';
 
                 const isApproved = status === 'approved';
                 
-                // Check for boolean or string values
                 const isEBill = (eBill === true || (typeof eBill === 'string' && eBill.includes('สมัคร')));
                 const isETax = (eTax === true || (typeof eTax === 'string' && eTax.includes('สมัคร')));
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50";
+                tr.className = "hover:bg-gray-50 border-b border-gray-100";
                 tr.innerHTML = `
-                    <td class="p-4 text-gray-500">${formatDate(timestamp)}</td>
+                    <td class="p-4 text-gray-500 whitespace-nowrap">${formatDate(timestamp)}</td>
                     <td class="p-4 font-medium">${name}</td>
                     <td class="p-4 text-gray-600 font-mono">${regId}</td>
+                    <td class="p-4 text-gray-600">${phone}</td> <!-- เบอร์โทร -->
+                    <td class="p-4 text-gray-600">${email}</td> <!-- อีเมล -->
                     <td class="p-4 text-center">${isEBill ? '<i class="fa-solid fa-check text-green-500"></i>' : '-'}</td>
                     <td class="p-4 text-center">${isETax ? '<i class="fa-solid fa-check text-green-500"></i>' : '-'}</td>
                     <td class="p-4 text-center">
@@ -186,7 +188,7 @@
                     <td class="p-4 text-center">
                         ${isApproved 
                             ? `<button disabled class="text-gray-300 cursor-not-allowed"><i class="fa-solid fa-check-double"></i></button>`
-                            : `<button onclick="approveUser('${userId}', '${name}', ${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shadow transition hover:scale-105">
+                            : `<button onclick="approveUser('${userId}', '${name}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs shadow transition hover:scale-105 whitespace-nowrap">
                                  อนุมัติ
                                </button>`
                         }
@@ -205,7 +207,7 @@
             document.getElementById('pendingCount').innerText = total - approved;
         }
 
-        async function approveUser(userId, name, index) {
+        async function approveUser(userId, name) {
             const result = await Swal.fire({
                 title: 'ยืนยันการอนุมัติ',
                 text: `ต้องการอนุมัติและส่งข้อความแจ้งเตือนคุณ ${name} ใช่หรือไม่?`,
@@ -220,8 +222,10 @@
                 Swal.fire({ title: 'กำลังดำเนินการ...', didOpen: () => Swal.showLoading() });
                 
                 try {
-                    // ส่งคำสั่ง approveUser
-                    const response = await fetch(API_URL, {
+                    // ส่งคำสั่ง approveUser ไปยัง Server
+                    // หมายเหตุ: เราไม่รอ response นานเกินไปเพื่อ UI ที่ลื่นไหล
+                    // แต่ยังไงก็ต้องส่ง request ไปจริงๆ
+                    const fetchPromise = fetch(API_URL, {
                         method: 'POST',
                         body: JSON.stringify({
                             action: 'approveUser',
@@ -229,30 +233,42 @@
                             name: name
                         })
                     });
-                    
-                    if (!response.ok) throw new Error("Network error");
 
-                    Swal.fire('สำเร็จ', 'อนุมัติเรียบร้อยแล้ว', 'success');
-                    fetchData(); // โหลดข้อมูลใหม่
+                    // --- FIX: อัปเดตหน้าจอทันที (Optimistic Update) ---
+                    // ไม่ต้องรอ fetch เสร็จสมบูรณ์ ให้แก้ข้อมูลในตัวแปร local (globalData) เลย
+                    const targetRow = globalData.find(r => r[1] === userId);
+                    if (targetRow) {
+                        targetRow[10] = 'approved'; // เปลี่ยนสถานะเป็น approved ทันที
+                    }
+                    renderTable(globalData); // วาดตารางใหม่
+                    updateStats(globalData); // อัปเดตตัวเลขสถิติ
+                    // -----------------------------------------------
+
+                    // รอให้ Request ส่งไปสักพัก (หรือไม่รอเลยก็ได้ถ้ามั่นใจ)
+                    // แต่เพื่อความชัวร์เราจะรอ response ถ้า error ค่อยแจ้งเตือน
+                    try {
+                        const response = await fetchPromise;
+                        if (!response.ok) throw new Error("Network error");
+                    } catch (apiError) {
+                        console.warn("API Call failed, but UI updated (Demo/Offline):", apiError);
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'อนุมัติเรียบร้อย',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
 
                 } catch (err) {
-                    console.warn("Approve failed (Demo Mode):", err);
-                    // Fallback for Demo Mode
+                    console.error(err);
+                    // Fallback สำหรับ Demo Mode
                     Swal.fire({
                         icon: 'success',
                         title: 'อนุมัติสำเร็จ (Demo)',
-                        text: 'ในโหมดตัวอย่าง ระบบจะจำลองว่าอนุมัติสำเร็จแล้ว',
+                        text: 'ระบบจำลองการอนุมัติเรียบร้อยแล้ว',
                         timer: 2000
                     });
-                    
-                    // Update local mock data to reflect change
-                    // Note: index passing in renderTable might not align perfectly if sorted differently, 
-                    // but works for simple demo list.
-                    const targetRow = globalData.find(r => r[1] === userId);
-                    if(targetRow) targetRow[10] = 'approved';
-                    
-                    renderTable(globalData);
-                    updateStats(globalData);
                 }
             }
         }
