@@ -26,7 +26,7 @@
         </div>
     </nav>
 
-    <div class="max-w-[95%] mx-auto px-4 py-8"> <!-- ขยายความกว้างคอนเทนเนอร์เพื่อให้พอดีกับคอลัมน์ที่เพิ่มมา -->
+    <div class="max-w-[95%] mx-auto px-4 py-8">
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
@@ -58,10 +58,8 @@
                             <th class="p-4">วันที่</th>
                             <th class="p-4">ชื่อ-นามสกุล</th>
                             <th class="p-4">ทะเบียนผู้ใช้น้ำ</th>
-                            <!-- เพิ่มคอลัมน์ใหม่ -->
                             <th class="p-4">เบอร์โทรศัพท์</th>
                             <th class="p-4">อีเมล</th>
-                            <!-- จบคอลัมน์ใหม่ -->
                             <th class="p-4 text-center">e-Bill</th>
                             <th class="p-4 text-center">e-Tax</th>
                             <th class="p-4 text-center">สถานะ</th>
@@ -77,17 +75,15 @@
     </div>
 
     <script>
-        // *** 1. แก้ไข URL ตรงนี้ให้เป็น Web App URL ของคุณ ***
+        // *** ใส่ URL Web App ที่ได้จากการ Deploy ใหม่ ***
         const API_URL = 'https://script.google.com/macros/s/AKfycbzKKmAmPlOXxSeALUDe3fr3YLBYXCwEwfNoJbJelKUeg-kvQcQpID7M0qPHVXIN0aUc/exec'; 
 
         let globalData = [];
 
-        // ข้อมูลจำลอง (Mock Data) สำหรับ Demo Mode
-        // Index Mapping: 0:keyId, 1:userId, 2:name, 3:phone, 4:email, 5:file, 6:timestamp, 7:regId, 8:bill, 9:tax, 10:status
+        // Mock Data (Corrected Index)
         const mockData = [
             ['1', 'U12345', 'สมชาย ใจดี (Demo)', '0812345678', 'somchai@email.com', '', new Date().toISOString(), '11223344', 'สมัครใช้บริการ', 'ไม่สมัคร', 'pending'],
-            ['2', 'U67890', 'วิไลวรรณ สวยงาม (Demo)', '0898765432', 'wilai@email.com', '', new Date(Date.now() - 86400000).toISOString(), '55667788', 'สมัครใช้บริการ', 'สมัครใช้บริการ', 'approved'],
-            ['3', 'U54321', 'มานะ อดทน (Demo)', '0901112222', '-', '', new Date(Date.now() - 172800000).toISOString(), '99887766', 'ไม่สมัคร', 'สมัครใช้บริการ', 'pending']
+            ['2', 'U67890', 'วิไลวรรณ สวยงาม (Demo)', '0898765432', 'wilai@email.com', '', new Date(Date.now() - 86400000).toISOString(), '55667788', 'สมัครใช้บริการ', 'สมัครใช้บริการ', 'approved']
         ];
 
         function formatDate(dateStr) {
@@ -114,8 +110,6 @@
                 if (!response.ok) throw new Error("Network response was not ok");
                 
                 const rawData = await response.json();
-                
-                // ตัด Header ออกและเอาล่าสุดขึ้นก่อน
                 const rows = rawData.slice(1).reverse(); 
                 globalData = rows;
 
@@ -124,23 +118,14 @@
 
             } catch (error) {
                 console.warn("Fetch failed, switching to Demo Mode:", error);
-                
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true
-                });
-                Toast.fire({
-                    icon: 'warning',
-                    title: 'โหลดข้อมูลไม่สำเร็จ',
-                    text: 'แสดงข้อมูลตัวอย่าง (Demo Mode)'
-                });
-
                 globalData = mockData;
                 renderTable(mockData);
                 updateStats(mockData);
+                
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'warning',
+                    title: 'แสดงข้อมูลตัวอย่าง (Demo Mode)', showConfirmButton: false, timer: 3000
+                });
             }
         }
 
@@ -154,21 +139,25 @@
             }
 
             data.forEach((row) => {
-                // Map ข้อมูลตาม Index
+                // *** แก้ไขลำดับข้อมูลให้ถูกต้อง (เอาคอลัมน์ Point ออกแล้ว) ***
+                // 0:keyId, 1:userlineId, 2:nameId, 3:phone, 4:email, 5:fileLink, 
+                // 6:timestamp, 7:regId, 8:eBill, 9:eTax, 10:Status
+                
                 const userId = row[1];
                 const name = row[2];
-                const phone = row[3] || '-';  // เบอร์โทร (Index 3)
-                const email = row[4] || '-';  // อีเมล (Index 4)
-                const timestamp = row[6];
-                const regId = row[7]; 
-                const eBill = row[8];
-                const eTax = row[9];
-                const status = row[10] ? row[10].toString().toLowerCase() : 'pending';
+                const phone = row[3] || '-';
+                const email = row[4] || '-';
+                const timestamp = row[6]; // Index 6
+                const regId = row[7];     // Index 7
+                const eBill = row[8];     // Index 8
+                const eTax = row[9];      // Index 9
+                const status = row[10] ? row[10].toString().toLowerCase() : 'pending'; // Index 10
 
                 const isApproved = status === 'approved';
-                
-                const isEBill = (eBill === true || (typeof eBill === 'string' && eBill.includes('สมัคร')));
-                const isETax = (eTax === true || (typeof eTax === 'string' && eTax.includes('สมัคร')));
+
+                // ตรวจสอบข้อความสมัครใช้บริการ
+                const isEBill = (eBill === true || (typeof eBill === 'string' && eBill.includes('สมัครใช้บริการ')));
+                const isETax = (eTax === true || (typeof eTax === 'string' && eTax.includes('สมัครใช้บริการ')));
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 border-b border-gray-100";
@@ -176,10 +165,10 @@
                     <td class="p-4 text-gray-500 whitespace-nowrap">${formatDate(timestamp)}</td>
                     <td class="p-4 font-medium">${name}</td>
                     <td class="p-4 text-gray-600 font-mono">${regId}</td>
-                    <td class="p-4 text-gray-600">${phone}</td> <!-- เบอร์โทร -->
-                    <td class="p-4 text-gray-600">${email}</td> <!-- อีเมล -->
-                    <td class="p-4 text-center">${isEBill ? '<i class="fa-solid fa-check text-green-500"></i>' : '-'}</td>
-                    <td class="p-4 text-center">${isETax ? '<i class="fa-solid fa-check text-green-500"></i>' : '-'}</td>
+                    <td class="p-4 text-gray-600">${phone}</td>
+                    <td class="p-4 text-gray-600">${email}</td>
+                    <td class="p-4 text-center">${isEBill ? '<i class="fa-solid fa-check text-green-500"></i>' : '<span class="text-gray-300">-</span>'}</td>
+                    <td class="p-4 text-center">${isETax ? '<i class="fa-solid fa-check text-green-500"></i>' : '<span class="text-gray-300">-</span>'}</td>
                     <td class="p-4 text-center">
                         <span class="px-2 py-1 rounded-full text-xs ${isApproved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
                             ${isApproved ? 'อนุมัติแล้ว' : 'รอตรวจสอบ'}
@@ -200,8 +189,7 @@
 
         function updateStats(data) {
             const total = data.length;
-            const approved = data.filter(r => r[10] === 'approved').length;
-            
+            const approved = data.filter(r => r[10] === 'approved').length; // Check Index 10
             document.getElementById('totalCount').innerText = total;
             document.getElementById('approvedCount').innerText = approved;
             document.getElementById('pendingCount').innerText = total - approved;
@@ -220,55 +208,28 @@
 
             if (result.isConfirmed) {
                 Swal.fire({ title: 'กำลังดำเนินการ...', didOpen: () => Swal.showLoading() });
-                
                 try {
-                    // ส่งคำสั่ง approveUser ไปยัง Server
-                    // หมายเหตุ: เราไม่รอ response นานเกินไปเพื่อ UI ที่ลื่นไหล
-                    // แต่ยังไงก็ต้องส่ง request ไปจริงๆ
                     const fetchPromise = fetch(API_URL, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            action: 'approveUser',
-                            userId: userId,
-                            name: name
-                        })
+                        body: JSON.stringify({ action: 'approveUser', userId: userId, name: name })
                     });
 
-                    // --- FIX: อัปเดตหน้าจอทันที (Optimistic Update) ---
-                    // ไม่ต้องรอ fetch เสร็จสมบูรณ์ ให้แก้ข้อมูลในตัวแปร local (globalData) เลย
+                    // Optimistic Update (Update Index 10)
                     const targetRow = globalData.find(r => r[1] === userId);
-                    if (targetRow) {
-                        targetRow[10] = 'approved'; // เปลี่ยนสถานะเป็น approved ทันที
-                    }
-                    renderTable(globalData); // วาดตารางใหม่
-                    updateStats(globalData); // อัปเดตตัวเลขสถิติ
-                    // -----------------------------------------------
+                    if (targetRow) targetRow[10] = 'approved';
+                    
+                    renderTable(globalData);
+                    updateStats(globalData);
 
-                    // รอให้ Request ส่งไปสักพัก (หรือไม่รอเลยก็ได้ถ้ามั่นใจ)
-                    // แต่เพื่อความชัวร์เราจะรอ response ถ้า error ค่อยแจ้งเตือน
                     try {
                         const response = await fetchPromise;
                         if (!response.ok) throw new Error("Network error");
-                    } catch (apiError) {
-                        console.warn("API Call failed, but UI updated (Demo/Offline):", apiError);
-                    }
+                    } catch (apiError) { console.warn("API Error:", apiError); }
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'อนุมัติเรียบร้อย',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
+                    Swal.fire({ icon: 'success', title: 'อนุมัติเรียบร้อย', timer: 1500, showConfirmButton: false });
                 } catch (err) {
                     console.error(err);
-                    // Fallback สำหรับ Demo Mode
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'อนุมัติสำเร็จ (Demo)',
-                        text: 'ระบบจำลองการอนุมัติเรียบร้อยแล้ว',
-                        timer: 2000
-                    });
+                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ลองใหม่อีกครั้ง' });
                 }
             }
         }
