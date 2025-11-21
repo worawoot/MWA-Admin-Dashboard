@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการข้อมูลลงทะเบียน MWA e-Bill</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'IBM Plex Sans Thai', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navbar -->
+    <nav class="bg-[#004A99] text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-faucet-drip text-2xl mr-3"></i>
+                    <span class="font-bold text-xl tracking-wide">MWA Admin Portal</span>
+                </div>
+                <div class="text-sm opacity-90">
+                    <i class="fa-solid fa-user-shield mr-2"></i>เจ้าหน้าที่ดูแลระบบ
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500 flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                    <i class="fa-solid fa-users text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">ลงทะเบียนทั้งหมด</p>
+                    <h3 class="text-2xl font-bold" id="totalUsers">0</h3>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-yellow-400 flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                    <i class="fa-solid fa-clock text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">รอตรวจสอบ</p>
+                    <h3 class="text-2xl font-bold" id="pendingUsers">0</h3>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 border-l-4 border-green-500 flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                    <i class="fa-solid fa-check-circle text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">อนุมัติแล้ว</p>
+                    <h3 class="text-2xl font-bold" id="approvedUsers">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
+                <h2 class="text-xl font-bold text-gray-800">รายการผู้ลงทะเบียนล่าสุด</h2>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="ค้นหาชื่อ หรือ ทะเบียนผู้ใช้น้ำ..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-64">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                </div>
+                <button onclick="fetchData()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition duration-200">
+                    <i class="fa-solid fa-rotate-right mr-2"></i>รีเฟรชข้อมูล
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                            <th class="p-4 font-semibold">วันที่ลงทะเบียน</th>
+                            <th class="p-4 font-semibold">ชื่อ-นามสกุล</th>
+                            <th class="p-4 font-semibold">ทะเบียนผู้ใช้น้ำ</th>
+                            <th class="p-4 font-semibold text-center">e-Bill</th>
+                            <th class="p-4 font-semibold text-center">e-Tax</th>
+                            <th class="p-4 font-semibold text-center">สถานะ</th>
+                            <th class="p-4 font-semibold text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="text-sm text-gray-700 divide-y divide-gray-100">
+                        <!-- Data will be injected here -->
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-gray-500">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังโหลดข้อมูล...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination (Mockup) -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-center">
+                <span class="text-xs text-gray-500">แสดง 50 รายการล่าสุด</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // URL ของ Google Apps Script (ต้องเป็นตัวเดียวกับที่ใช้ใน Liff แต่ต้อง Deploy ใหม่ให้รองรับ doGet/doPost สำหรับ Admin)
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzKKmAmPlOXxSeALUDe3fr3YLBYXCwEwfNoJbJelKUeg-kvQcQpID7M0qPHVXIN0aUc/exec'; 
+
+        // Mock Data สำหรับแสดงผลตัวอย่าง (ถ้าไม่มี API จริง)
+        // ในการใช้งานจริง ฟังก์ชัน fetchData จะไปดึงข้อมูลจาก Google Sheet มาแทน
+        let mockData = [
+            { 
+                timestamp: '2023-10-25 10:30', 
+                nameId: 'สมชาย ใจดี', 
+                keynumber3Id: '12345678', 
+                userlineId: 'U1234567890abcdef1234567890abcdef',
+                eBill: true, 
+                eTax: true, 
+                status: 'pending' 
+            },
+            { 
+                timestamp: '2023-10-25 11:15', 
+                nameId: 'วิไลวรรณ สวยงาม', 
+                keynumber3Id: '87654321', 
+                userlineId: 'U9876543210fedcba09876543210fedcba',
+                eBill: true, 
+                eTax: false, 
+                status: 'approved' 
+            },
+             { 
+                timestamp: '2023-10-26 09:00', 
+                nameId: 'ประกิต รักชาติ', 
+                keynumber3Id: '11223344', 
+                userlineId: 'Uabc123...',
+                eBill: false, 
+                eTax: true, 
+                status: 'pending' 
+            }
+        ];
+
+        // ฟังก์ชันดึงข้อมูล (จำลอง)
+        async function fetchData() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังโหลดข้อมูล...</td></tr>';
+
+            // *** ในการใช้งานจริง: เปิด Comment ด้านล่างเพื่อดึงข้อมูลจาก API ***
+            
+            try {
+                const response = await fetch(API_URL + '?action=getUsers');
+                const data = await response.json();
+                renderTable(data);
+                updateStats(data);
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'ไม่สามารถดึงข้อมูลได้', 'error');
+            }          
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-500">ไม่พบข้อมูล</td></tr>';
+                return;
+            }
+
+            data.forEach((row, index) => {
+                const statusBadge = row.status === 'approved' 
+                    ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 border border-green-200">อนุมัติแล้ว</span>'
+                    : '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">รอตรวจสอบ</span>';
+
+                const actionBtn = row.status === 'approved'
+                    ? `<button class="text-gray-400 cursor-not-allowed" disabled><i class="fa-solid fa-check"></i> เรียบร้อย</button>`
+                    : `<button onclick="confirmAction('${row.userlineId}', '${row.nameId}', ${index})" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs shadow transition transform hover:scale-105">
+                        <i class="fa-regular fa-paper-plane mr-1"></i> อนุมัติ & แจ้งเตือน
+                       </button>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition duration-150";
+                tr.innerHTML = `
+                    <td class="p-4 whitespace-nowrap text-gray-500">${row.timestamp}</td>
+                    <td class="p-4 font-medium text-gray-800">${row.nameId}</td>
+                    <td class="p-4 text-gray-600 font-mono">${row.keynumber3Id}</td>
+                    <td class="p-4 text-center">${row.eBill ? '<i class="fa-solid fa-circle-check text-green-500"></i>' : '<i class="fa-solid fa-circle-xmark text-gray-300"></i>'}</td>
+                    <td class="p-4 text-center">${row.eTax ? '<i class="fa-solid fa-circle-check text-green-500"></i>' : '<i class="fa-solid fa-circle-xmark text-gray-300"></i>'}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStats(data) {
+            document.getElementById('totalUsers').innerText = data.length;
+            document.getElementById('pendingUsers').innerText = data.filter(d => d.status === 'pending').length;
+            document.getElementById('approvedUsers').innerText = data.filter(d => d.status === 'approved').length;
+        }
+
+        // ฟังก์ชันกดปุ่มอนุมัติ
+        async function confirmAction(userlineId, name, index) {
+            const result = await Swal.fire({
+                title: 'ยืนยันการอนุมัติ',
+                html: `ต้องการอนุมัติรายการของ <b>คุณ${name}</b> <br>และส่ง Line แจ้งเตือนใช่หรือไม่?`,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#004A99',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ยืนยันและส่งข้อความ',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (result.isConfirmed) {
+                await sendNotification(userlineId, name, index);
+            }
+        }
+
+        // ฟังก์ชันส่งคำขอไปที่ Server (Google Apps Script)
+        async function sendNotification(userId, name, index) {
+            
+            // แสดง Loading
+            Swal.fire({
+                title: 'กำลังดำเนินการ...',
+                text: 'กำลังส่งข้อความแจ้งเตือนผ่าน LINE',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading() }
+            });
+
+            // สร้าง Payload
+            const payload = {
+                action: 'notifyUser', // บอก Server ว่าให้ทำ action นี้
+                userId: userId,
+                name: name
+            };
+
+            try {
+                // *** ในการใช้งานจริง: เปลี่ยนเป็น fetch ไปยัง API_URL ของคุณ ***
+                 const response = await fetch(API_URL, {
+                     method: 'POST',
+                     body: JSON.stringify(payload)
+                 });
+                 const result = await response.text();
+                
+                // จำลองว่าส่งสำเร็จ
+                await new Promise(r => setTimeout(r, 1500));
+
+                // อัปเดต Mock Data (จำลองการเปลี่ยนสถานะในตาราง)
+                mockData[index].status = 'approved';
+                renderTable(mockData);
+                updateStats(mockData);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'สำเร็จ!',
+                    text: 'ระบบได้ส่งข้อความแจ้งเตือนไปยังผู้ใช้เรียบร้อยแล้ว',
+                    timer: 2000
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถส่งข้อความได้', 'error');
+            }
+        }
+
+        // Search Function
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            const term = e.target.value.toLowerCase();
+            const filtered = mockData.filter(row => 
+                row.nameId.toLowerCase().includes(term) || 
+                row.keynumber3Id.includes(term)
+            );
+            renderTable(filtered);
+        });
+
+        // เริ่มต้นทำงาน
+        fetchData();
+
+    </script>
+</body>
+</html>
